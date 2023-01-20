@@ -128,25 +128,25 @@ int main( void )
     
     // Ensure we can capture the escape key being pressed below
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-    // set up the projection matrix (the camera)
+//    // set up the projection matrix (the camera)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
     // halvorsen
         gluPerspective(45, 500/500, 0.01f, 1000.0f);
     
-        gluLookAt(50, 200, 400,
+        gluLookAt(0, 10, 20,
                   0, 0, 0,
                   0, 1, 0);
-        glRotatef(-120.0, 0.6, 0.2, 0.7);
-        glRotatef(-60.0, 1.0, 0.0, 1.0);
-        glRotatef(90.0, 1.0, 0.0, 0.0);
-    
+//        glRotatef(-120.0, 0.6, 0.2, 0.7);
+//        glRotatef(-60.0, 1.0, 0.0, 1.0);
+//        glRotatef(90.0, 1.0, 0.0, 0.0);
+
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
-    //    glRotatef(80.0, 0.0, 1.0, 1.0);
-    //    glTranslatef(0.0, 100.0, 0);
-        glScalef(15, 15, 15);
+//        glRotatef(80.0, 0.0, 1.0, 1.0);
+//        glTranslatef(0.0, 100.0, 0);
+//        glScalef(15, 15, 15);
     
     // I haven't normally done this, normally opt to just not wipe the canvas instead
     GLuint VertexArrayID;
@@ -155,7 +155,7 @@ int main( void )
     
     // I want the drawing to hit the ground running, so I do the maths a few times to get it going,
     // for this I run it 10k times to just get some points to see if the draw works
-    for(int i = 0; i < 10000 ; i++) {
+    for(int i = 0; i < 100 ; i++) {
         halvorsen(); // pushes a new x, y, and z to `points`
     }
     
@@ -178,20 +178,15 @@ int main( void )
         glBufferData(
                      GL_ARRAY_BUFFER,
                      points.size()*sizeof(GLfloat), // sizeof(points) = 24 | points.size() = 30000
-                     &points, // pointer to `points`, have tried with `[0]` as well, but neither worked
+                     points.data(), // pointer to `points`, have tried with `[0]` as well, but neither worked
                      GL_STATIC_DRAW); // static because I've already generated them
     
     
-    glEnableClientState(GL_VERTEX_ARRAY);
-//        I normally have this outside of the loop because I want to persist the drawings ...
-//        but I can't set a BG color now, so I was trying to get the whole std::vector thing
-//        to work but ... no luck
-//        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     do{
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-        glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+        glEnableClientState(GL_VERTEX_ARRAY);
         
-        glColor3f(1.0f, 1.0f, 1.0f); // white-ish
+        glColor3f(1.0f, 1.0f, 1.0f); // white
         glVertexPointer(
                         3, // this needs to be 1-4, right?
                         GL_FLOAT, // the array is all floats
@@ -199,7 +194,8 @@ int main( void )
                         0);
         
 //        glDrawElements(GL_LINE_STRIP, 1, GL_UNSIGNED_BYTE, 0); // when I was trying with indicies
-        glDrawArrays(GL_LINES, 0, points.size());
+        glDrawArrays(GL_LINE_STRIP, 0, points.size()*sizeof(GLfloat));
+        glDisableClientState(GL_VERTEX_ARRAY);
 //        halvorsen();
         
         glfwSwapBuffers(window);
