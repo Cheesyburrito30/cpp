@@ -40,8 +40,9 @@ int i = 0;
 // x, y, z,
 // x, y, z,
 // x, y, z, ...
-std::vector<std::vector<GLfloat> > points;
-std::vector<GLubyte> indices;
+// std::vector<std::vector<GLfloat> > points; // This is what I was trying, [x,y,z][]
+ std::vector<GLfloat> points;
+//std::vector<GLubyte> indices;
 
 void halvorsen() {
     float a = 1.89;
@@ -52,20 +53,21 @@ void halvorsen() {
     float dz = (-a * z - 4 * x - 4 * y - (x * x)) * dt;
     
     
-    indices.push_back(i);
     x += h * dx;
     y += h * dy;
     z += h * dz;
-    i = points.size() * 3;
     
-    std::vector<GLfloat> newPoint;
-    newPoint.push_back(x);
-    newPoint.push_back(y);
-    newPoint.push_back(z);
-    points.push_back(newPoint);
+        points.push_back(x);
+    points.push_back(y);
+    points.push_back(z);
     
-    std::cout << "indice " << i << " pointSize " << points.size() << std::endl;
-    std::cout << x << " " << y << " " << z << std::endl;
+    // again, for [x,y,z][] array
+//    indices.push_back(i);
+//    i = points.size() * 3;
+//    newPoint.push_back(x);
+//    newPoint.push_back(y);
+//    newPoint.push_back(z);
+//    points.push_back(newPoint);
 }
 
 void incrementColors() {
@@ -91,7 +93,6 @@ float lerp(float x, float a, float b, float c, float d) {
 
 int main( void )
 {
-    indices.push_back(i);
     // Initialise GLFW
     if( !glfwInit() )
     {
@@ -127,27 +128,25 @@ int main( void )
     
     // Ensure we can capture the escape key being pressed below
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-
     // set up the projection matrix (the camera)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
     // halvorsen
-//        gluPerspective(45, 500/500, 0.01f, 1000.0f);
-//
-//        gluLookAt(0, 0, 1,
-//                  0, 0, 0,
-//                  0, 1, 0);
-//        glRotatef(-120.0, 0.6, 0.2, 0.7);
-//        glRotatef(-60.0, 1.0, 0.0, 1.0);
-//        glRotatef(90.0, 1.0, 0.0, 0.0);
+        gluPerspective(45, 500/500, 0.01f, 1000.0f);
+    
+        gluLookAt(50, 200, 400,
+                  0, 0, 0,
+                  0, 1, 0);
+        glRotatef(-120.0, 0.6, 0.2, 0.7);
+        glRotatef(-60.0, 1.0, 0.0, 1.0);
+        glRotatef(90.0, 1.0, 0.0, 0.0);
     
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
     //    glRotatef(80.0, 0.0, 1.0, 1.0);
     //    glTranslatef(0.0, 100.0, 0);
-//        glScalef(0.5, 0.5, 0.5);
-    
+        glScalef(15, 15, 15);
     
     // I haven't normally done this, normally opt to just not wipe the canvas instead
     GLuint VertexArrayID;
@@ -156,34 +155,31 @@ int main( void )
     
     // I want the drawing to hit the ground running, so I do the maths a few times to get it going,
     // for this I run it 10k times to just get some points to see if the draw works
-    for(int i = 0; i < 100 ; i++) {
+    for(int i = 0; i < 10000 ; i++) {
         halvorsen(); // pushes a new x, y, and z to `points`
     }
     
-    GLfloat verts[8][3] = {{0.0, 0.0, 0.0},
-               {0.0, 0.0, 0.1},
-               {0.0, 0.1, 0.0},
-               {0.0, 0.1, 0.1},
-               {0.1, 0.0, 0.0},
-               {0.1, 0.0, 0.1},
-               {0.1, 0.1, 0.0},
-               {0.1, 0.1, 0.1}};
-    GLubyte ind[1] = {0};
+//    GLfloat verts[8][3] = {{0.0, 0.0, 0.0},
+//               {0.0, 0.0, 0.1},
+//               {0.0, 0.1, 0.0},
+//               {0.0, 0.1, 0.1},
+//               {0.1, 0.0, 0.0},
+//               {0.1, 0.0, 0.1},
+//               {0.1, 0.1, 0.0},
+//               {0.1, 0.1, 0.1}};
+//    GLubyte ind[1] = {0};
     
     GLuint vertexbuffer, elementBuffer;
     glGenBuffers(1, &vertexbuffer);
-    glGenBuffers(1, &elementBuffer);
+//    glGenBuffers(1, &elementBuffer);
     
-//    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBuffer);
-//        glBufferData(
-//                     GL_ARRAY_BUFFER,
-//                     24*sizeof(GLfloat), // sizeof(points) = 24 | points.size() = 30000
-//                     verts, // pointer to `points`, have tried with `[0]` as well, but neither worked
-//                     GL_STATIC_DRAW); // dynamic because I'm populating the array 10k times
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 1*sizeof(GLubyte), ind,
-             GL_STATIC_DRAW);
-//    GLubyte ind[8] = {0,3,6,9,12,15,18,21};
+    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+//    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBuffer);
+        glBufferData(
+                     GL_ARRAY_BUFFER,
+                     points.size()*sizeof(GLfloat), // sizeof(points) = 24 | points.size() = 30000
+                     &points, // pointer to `points`, have tried with `[0]` as well, but neither worked
+                     GL_STATIC_DRAW); // static because I've already generated them
     
     
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -194,14 +190,6 @@ int main( void )
     do{
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
         glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-//        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBuffer);
-            glBufferData(
-                         GL_ARRAY_BUFFER,
-                         points.size()*3*sizeof(GLfloat), // sizeof(points) = 24 | points.size() = 30000
-                         &points, // pointer to `points`, have tried with `[0]` as well, but neither worked
-                         GL_DYNAMIC_DRAW); // dynamic because I'm populating the array 10k times
-//        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size()*sizeof(GLubyte), &indices,
-//                 GL_DYNAMIC_DRAW);
         
         glColor3f(1.0f, 1.0f, 1.0f); // white-ish
         glVertexPointer(
@@ -210,9 +198,9 @@ int main( void )
                         sizeof(GLfloat),
                         0);
         
-        glDrawElements(GL_LINE_STRIP, 1, GL_UNSIGNED_BYTE, 0);
-//        glDrawArrays(GL_POINTS, 0, points.size()*3);
-        halvorsen();
+//        glDrawElements(GL_LINE_STRIP, 1, GL_UNSIGNED_BYTE, 0); // when I was trying with indicies
+        glDrawArrays(GL_LINES, 0, points.size());
+//        halvorsen();
         
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -232,120 +220,3 @@ int main( void )
 
     return 0;
 }
-
-
-// main loop I have been using, use this with the `halvorsen` perspective stuff to see the halvorsen attractor in action
-//glLineWidth(1.5f);
-//
-//glBegin(GL_LINES);
-//    glColor3f(r, g, bl);
-//
-//    glVertex3d(x, y, z);
-//
-//    halvorsen();
-//
-//    glVertex3d(x, y, z);
-//
-//    incrementColors();
-//glEnd();
-
-//void lorenz() {
-    //float a = 19;
-    //float b = 28;
-    //float c = 9/3;
-
-//    float dt = 0.01;
-//    float dx = (a * (y - x)) * dt;
-//    float dy = (x * (b - z) - y) * dt;
-//    float dz = (x * y - c * z) * dt;
-//
-//    x = x + dx;
-//    y = y + dy;
-//    z = z + dz;
-//}
-//
-//void aizawa() {
-    //float a = 0.95;
-    //float b = 0.7;
-    //float c = 0.6;
-    //float d = 3.5;
-    //float e = 0.25;
-    //float f = 0.1;
-//    float h = 0.03;
-
-//    float dx = ((z - b) * x - d * y) * dt;
-//    float dy = (d * x + (z - b) * y) * dt;
-//    float dz = (c + (a * z) - ((z * z * z) / 3) -
-//          ((x * x) + (y * y)) * (1 + (e * z)) // ((x * x) + (e * z * (x * x)) + (y * y) + (e * z * (y * y)))
-//          + f * z * (x * x * x)) * dt;
-//
-//    x += h * dx;
-//    y += h * dy;
-//    z += h * dz;
-//
-//    std::cout << x << " " << y << " " << z << std::endl;
-//}
-
-
-//void thomas() {
-//    float b = 0.208186;
-//    float h = 0.027;
-//
-//    float dx = (sin(y) - b * x) * dt;
-//    float dy = (sin(z) - b * y) * dt;
-//    float dz = (sin(x) - b * z) * dt;
-//
-//    x += h * dx;
-//    y += h * dy;
-//    z += h * dz;
-//    std::cout << x << " " << y << " " << z <<std::endl;
-//}
-
-// set up the projection matrix (the camera)
-//glMatrixMode(GL_PROJECTION);
-//glLoadIdentity();
-
-// halvorsen
-//    gluPerspective(45, 500/500, 0.01f, 1000.0f);
-//
-//    gluLookAt(50, 200, 400,
-//              0, 0, 0,
-//              0, 1, 0);
-//    glRotatef(-120.0, 0.6, 0.2, 0.7);
-//    glRotatef(-60.0, 1.0, 0.0, 1.0);
-//    glRotatef(90.0, 1.0, 0.0, 0.0);
-//
-//    glMatrixMode(GL_MODELVIEW);
-//    glLoadIdentity();
-////    glRotatef(80.0, 0.0, 1.0, 1.0);
-////    glTranslatef(0.0, 100.0, 0);
-//    glScalef(15, 15, 15);
-
-//// Aizawa
-//    gluPerspective(45, 200/200, 0.01f, 500.0f);
-//
-//    gluLookAt(50, 50, 100,
-//              0, 0, 0,
-//              0, 1, 0);
-//    glRotatef(45.0, 1.0, 1.0, 0.0);
-//
-//    glMatrixMode(GL_MODELVIEW);
-//    glLoadIdentity();
-////    glRotatef(80.0, 0.0, 1.0, 1.0);
-////    glTranslatef(0.0, 100.0, 0);
-//    glScalef(20, 30, 20);
-
-
-// thomas
-
-//    gluPerspective(60, 500/500, 0.01f, 500.0f);
-//
-//    glMatrixMode(GL_MODELVIEW);
-//    glLoadIdentity();
-//    gluLookAt(0, 0, 200,
-//              10, 0, 0,
-//              0, 1, 0);
-//    glScalef(20, 20, 1);
-//    glRotatef(-70.0, 0.0, 1.0, 1.0);
-//    glRotatef(20.0, 1.0, 1.0, 0.0);
-//    glTranslatef(0.0, 0.0, 0);
