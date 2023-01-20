@@ -22,6 +22,7 @@ using namespace glm;
 float x = -1.48;
 float y = -1.51;
 float z = 2.04;
+
 float dt = 0.5;
 
 // color starting values
@@ -34,25 +35,37 @@ float dr = 0.003f;
 float dg = 0.002f;
 float dBl = 0.001f;
 
+int i = 0;
+
 // x, y, z,
 // x, y, z,
 // x, y, z, ...
-std::vector<GLfloat> points;
+std::vector<std::vector<GLfloat> > points;
+std::vector<GLubyte> indices;
 
 void halvorsen() {
     float a = 1.89;
     float h = 0.03;
-    
+
     float dx = (-a * x - 4 * y - 4 * z - (y * y)) * dt;
     float dy = (-a * y - 4 * z - 4 * x - (z * z)) * dt;
     float dz = (-a * z - 4 * x - 4 * y - (x * x)) * dt;
     
+    
+    indices.push_back(i);
     x += h * dx;
     y += h * dy;
     z += h * dz;
-    points.push_back(x);
-    points.push_back(y);
-    points.push_back(z);
+    i = points.size() * 3;
+    
+    std::vector<GLfloat> newPoint;
+    newPoint.push_back(x);
+    newPoint.push_back(y);
+    newPoint.push_back(z);
+    points.push_back(newPoint);
+    
+    std::cout << "indice " << i << " pointSize " << points.size() << std::endl;
+    std::cout << x << " " << y << " " << z << std::endl;
 }
 
 void incrementColors() {
@@ -78,6 +91,7 @@ float lerp(float x, float a, float b, float c, float d) {
 
 int main( void )
 {
+    indices.push_back(i);
     // Initialise GLFW
     if( !glfwInit() )
     {
@@ -86,11 +100,11 @@ int main( void )
         return -1;
     }
 
-    glfwWindowHint(GLFW_SAMPLES, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); //We don't want the old OpenGL
+//    glfwWindowHint(GLFW_SAMPLES, 4);
+//    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+//    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+//    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
+//    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); //We don't want the old OpenGL
     
     // Open a window and create its OpenGL context
     window = glfwCreateWindow( 500, 500, "Tutorial 02 - Red triangle", NULL, NULL);
@@ -114,6 +128,27 @@ int main( void )
     // Ensure we can capture the escape key being pressed below
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
+    // set up the projection matrix (the camera)
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+
+    // halvorsen
+//        gluPerspective(45, 500/500, 0.01f, 1000.0f);
+//
+//        gluLookAt(0, 0, 1,
+//                  0, 0, 0,
+//                  0, 1, 0);
+//        glRotatef(-120.0, 0.6, 0.2, 0.7);
+//        glRotatef(-60.0, 1.0, 0.0, 1.0);
+//        glRotatef(90.0, 1.0, 0.0, 0.0);
+    
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+    //    glRotatef(80.0, 0.0, 1.0, 1.0);
+    //    glTranslatef(0.0, 100.0, 0);
+//        glScalef(0.5, 0.5, 0.5);
+    
+    
     // I haven't normally done this, normally opt to just not wipe the canvas instead
     GLuint VertexArrayID;
     glGenVertexArrays(1, &VertexArrayID);
@@ -121,37 +156,63 @@ int main( void )
     
     // I want the drawing to hit the ground running, so I do the maths a few times to get it going,
     // for this I run it 10k times to just get some points to see if the draw works
-    for(int i = 0; i < 10000; i++) {
+    for(int i = 0; i < 100 ; i++) {
         halvorsen(); // pushes a new x, y, and z to `points`
     }
     
-    GLuint vertexbuffer;
-    glGenBuffers(1, &vertexbuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-    glBufferData(
-                 GL_ARRAY_BUFFER,
-                 points.size()/3, // sizeof(points) = 24 | points.size() = 30000
-                 &points[0], // pointer to `points`, have tried with `[0]` as well, but neither worked
-                 GL_DYNAMIC_DRAW); // dynamic because I'm populating the array 10k times
+    GLfloat verts[8][3] = {{0.0, 0.0, 0.0},
+               {0.0, 0.0, 0.1},
+               {0.0, 0.1, 0.0},
+               {0.0, 0.1, 0.1},
+               {0.1, 0.0, 0.0},
+               {0.1, 0.0, 0.1},
+               {0.1, 0.1, 0.0},
+               {0.1, 0.1, 0.1}};
+    GLubyte ind[1] = {0};
     
+    GLuint vertexbuffer, elementBuffer;
+    glGenBuffers(1, &vertexbuffer);
+    glGenBuffers(1, &elementBuffer);
+    
+//    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBuffer);
+//        glBufferData(
+//                     GL_ARRAY_BUFFER,
+//                     24*sizeof(GLfloat), // sizeof(points) = 24 | points.size() = 30000
+//                     verts, // pointer to `points`, have tried with `[0]` as well, but neither worked
+//                     GL_STATIC_DRAW); // dynamic because I'm populating the array 10k times
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 1*sizeof(GLubyte), ind,
+             GL_STATIC_DRAW);
+//    GLubyte ind[8] = {0,3,6,9,12,15,18,21};
+    
+    
+    glEnableClientState(GL_VERTEX_ARRAY);
 //        I normally have this outside of the loop because I want to persist the drawings ...
 //        but I can't set a BG color now, so I was trying to get the whole std::vector thing
 //        to work but ... no luck
 //        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     do{
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-        glEnableClientState(GL_VERTEX_ARRAY);
+        glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+//        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBuffer);
+            glBufferData(
+                         GL_ARRAY_BUFFER,
+                         points.size()*3*sizeof(GLfloat), // sizeof(points) = 24 | points.size() = 30000
+                         &points, // pointer to `points`, have tried with `[0]` as well, but neither worked
+                         GL_DYNAMIC_DRAW); // dynamic because I'm populating the array 10k times
+//        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size()*sizeof(GLubyte), &indices,
+//                 GL_DYNAMIC_DRAW);
         
         glColor3f(1.0f, 1.0f, 1.0f); // white-ish
-        glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer); // I have no idea why this is needed, I assume it repopulates the buffer?
         glVertexPointer(
                         3, // this needs to be 1-4, right?
                         GL_FLOAT, // the array is all floats
-                        0,
-                        &points[0]);
-
-        glDrawArrays(GL_LINES, 0, points.size()/3);
-        glDisableClientState(GL_VERTEX_ARRAY);
+                        sizeof(GLfloat),
+                        0);
+        
+        glDrawElements(GL_LINE_STRIP, 1, GL_UNSIGNED_BYTE, 0);
+//        glDrawArrays(GL_POINTS, 0, points.size()*3);
+        halvorsen();
         
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -163,6 +224,7 @@ int main( void )
     
     // Cleanup VBO and shader
     glDeleteBuffers(1, &vertexbuffer);
+//    glDeleteBuffers(1, &elementBuffer);
     glDeleteVertexArrays(1, &VertexArrayID);
 
     // Close OpenGL window and terminate GLFW
